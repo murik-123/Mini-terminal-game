@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(YourProjectName)
+project(TerminalGame)
 
 # Set the standard to C++20
 set(CMAKE_CXX_STANDARD 20)
@@ -13,9 +13,9 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(nlohmann_json)
 
-add_executable(YourProjectName main.cpp)
+add_executable(TerminalGame main.cpp)
 
 # Link the JSON library to your target
-target_link_libraries(YourProjectName PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(TerminalGame PRIVATE nlohmann_json::nlohmann_json)
 
 
