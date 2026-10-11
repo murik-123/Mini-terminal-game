@@ -1,94 +1,35 @@
 #include <iostream>
 #include <string>
-#include <fstream>
 #include <vector>
-#include <nlohmann/json.hpp>
+#include <memory>
+#include <fstream>
 #include <iomanip>
+#include <nlohmann/json.hpp>
+
+#include "Player.h"
+#include "Monster.h"
+#include "GameSaver.h"
 
 using json = nlohmann::json;
 
-namespace {
-    void welcome_page() {
-        std::cout << "Welcome to the game!\n"
-                  << "Controls:\n"
-                  << "Press 1 to attack\n"
-                  << "Press 2 to heal\n"
-                  << "Press 3 to charge attack\n"
-                  << "Press 4 to MANUAL SAVE\n"
-                  << "Press 5 to MANUAL LOAD\n"
-                  << "Press 6 to exit\n";
-    }
-
-    class Player {
-    public:
-        int player_health = 150;
-        int player_damage = 30;
-        int player_charge = 50;
-
-        void heal_player() {
-            player_health += 20;
-        }
-    };
-
-    class Monster {
-    public:
-        int monster_health = 250;
-        int monster_damage = 25;
-
-        void attack_monster(Player& p) const {
-            p.player_health -= monster_damage;
-        }
-        void damage_player(const Player& p) {
-            monster_health -= p.player_damage;
-        }
-        void charge_player(const Player& p) {
-            monster_health -= p.player_charge;
-        }
-    };
-
-    void saveGameJSON(const Player& p, const Monster& m, const std::string& name, const std::vector<std::string>& history) {
-        std::ofstream outFile("save_game.json");
-
-        if (outFile.is_open()) {
-            json saveData;
-            saveData["player_name"] = name;
-            saveData["player_health"] = p.player_health;
-            saveData["monster_health"] = m.monster_health;
-            saveData["action_history"] = history;
-
-            outFile << saveData.dump(4);
-            outFile.close();
-            std::cout << "\n[SUCCESS] Game and history saved to save_game.json!\n";
-        } else {
-            std::cerr << "\n[ERROR] Could not create JSON save file.\n";
-        }
-    }
-
-    void loadGameJSON(Player& p, Monster& m, std::string& name, std::vector<std::string>& history) {
-        std::ifstream inFile("save_game.json");
-
-        if (inFile.is_open()) {
-            json saveData;
-            inFile >> saveData;
-
-            name = saveData["player_name"].get<std::string>();
-            p.player_health = saveData["player_health"].get<int>();
-            m.monster_health = saveData["monster_health"].get<int>();
-
-            history = saveData["action_history"].get<std::vector<std::string>>();
-
-            inFile.close();
-            std::cout << "\n[SUCCESS] Game state and action history loaded successfully!\n";
-        } else {
-            std::cout << "\n[WARNING] No save file found. Continuing current state.\n";
-        }
-    }
+void welcome_page() {
+    std::cout << "Welcome to the game!\n"
+              << "Controls:\n"
+              << "Press 1 to attack\n"
+              << "Press 2 to heal\n"
+              << "Press 3 to charge attack\n"
+              << "Press 4 to MANUAL SAVE\n"
+              << "Press 5 to MANUAL LOAD\n"
+              << "Press 6 to exit\n";
 }
 
 int main() {
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+
     int choice = 0;
     Player p;
-    Monster m;
+    std::unique_ptr<Monster> m;
+    std::string monster_type;
     std::string nickname;
     std::vector<std::string> action_history;
 
@@ -98,16 +39,26 @@ int main() {
     std::getline(std::cin, nickname);
     std::cout << "Hello, " << nickname << "!\n\n";
 
-    while (m.monster_health > 0 && p.player_health > 0) {
+    if (std::rand() % 2 == 0) {
+        m = std::make_unique<Goblin>();
+        monster_type = "Goblin";
+        std::cout << "A sneaky Goblin appears!\n";
+    } else {
+        m = std::make_unique<Dragon>();
+        monster_type = "Dragon";
+        std::cout << "A terrifying Dragon appears!\n";
+    }
+
+    while (m->monster_health > 0 && p.player_health > 0) {
         std::cout << "-----------------------------------\n";
-        std::cout << "Player HP: " << p.player_health << " | Monster HP: " << m.monster_health << "\n";
+        std::cout << "Player HP: " << p.player_health << " | " << monster_type << " HP: " << m->monster_health << "\n";
         std::cout << "Enter your choice (1-6): ";
         std::cin >> choice;
 
         if (choice == 1) {
-            m.damage_player(p);
-            std::cout << "You dealt " << p.player_damage << " hp to the monster.\n";
-            action_history.emplace_back("Attacked monster for 30 damage");
+            m->damage_player(p);
+            std::cout << "You dealt " << p.player_damage << " hp to the " << monster_type << ".\n";
+            action_history.emplace_back("Attacked " + monster_type + " for 30 damage");
         }
         else if (choice == 2) {
             p.heal_player();
@@ -115,19 +66,17 @@ int main() {
             action_history.emplace_back("Healed 20 HP");
         }
         else if (choice == 3) {
-            m.charge_player(p);
-            std::cout << "You dealt " << p.player_charge << " hp to the monster.\n";
+            m->charge_player(p);
+            std::cout << "You dealt " << p.player_charge << " hp to the " << monster_type << ".\n";
             action_history.emplace_back("Used charge attack for 50 damage");
         }
         else if (choice == 4) {
-
             action_history.emplace_back("Manually saved the game");
-            saveGameJSON(p, m, nickname, action_history);
+            saveGameJSON(p, *m, nickname, action_history, monster_type);
             continue;
         }
         else if (choice == 5) {
-
-            loadGameJSON(p, m, nickname, action_history);
+            loadGameJSON(p, m, nickname, action_history, monster_type);
             action_history.emplace_back("Manually loaded a save");
             continue;
         }
@@ -140,15 +89,16 @@ int main() {
             continue;
         }
 
-        if (m.monster_health > 0) {
-            m.attack_monster(p);
-            std::cout << "Monster dealt " << m.monster_damage << " damage to you!\n";
-            action_history.emplace_back("Monster counter-attacked for 25 damage");
+        if (m->monster_health > 0) {
+            int m_dmg = m->monster_damage();
+            m->attack_monster(p, m_dmg);
+            std::cout << "The " << monster_type << " dealt " << m_dmg << " damage to you!\n";
+            action_history.emplace_back(monster_type + " counter-attacked for " + std::to_string(m_dmg) + " damage");
         }
     }
 
-    if (m.monster_health <= 0) {
-        std::cout << "\nCongratulations " << nickname << ", You won!\n";
+    if (m->monster_health <= 0) {
+        std::cout << "\nCongratulations " << nickname << ", You won against the " << monster_type << "!\n";
         action_history.emplace_back("Won the game");
     }
     else if (p.player_health <= 0) {
@@ -159,8 +109,9 @@ int main() {
     json game_data;
     game_data["a) player_name"] = nickname;
     game_data["b) player_health"] = p.player_health;
-    game_data["c) monster_health"] = m.monster_health;
-    game_data["d) player_actions_history"] = action_history;
+    game_data["c) monster_type"] = monster_type;
+    game_data["d) monster_health"] = m->monster_health;
+    game_data["e) player_actions_history"] = action_history;
 
     std::ofstream outFile("game_summary.json");
 
