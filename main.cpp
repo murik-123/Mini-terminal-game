@@ -14,10 +14,10 @@ namespace {
                   << "Press 1 to attack\n"
                   << "Press 2 to heal\n"
                   << "Press 3 to charge attack\n"
-                  << "Press 4 to exit\n";
+                  << "Press 4 to MANUAL SAVE\n"
+                  << "Press 5 to MANUAL LOAD\n"
+                  << "Press 6 to exit\n";
     }
-
-    class Monster;
 
     class Player {
     public:
@@ -29,8 +29,9 @@ namespace {
             player_health += 20;
         }
     };
+
     class Monster {
-        public:
+    public:
         int monster_health = 250;
         int monster_damage = 25;
 
@@ -45,67 +46,103 @@ namespace {
         }
     };
 
+    void saveGameJSON(const Player& p, const Monster& m, const std::string& name, const std::vector<std::string>& history) {
+        std::ofstream outFile("save_game.json");
+
+        if (outFile.is_open()) {
+            json saveData;
+            saveData["player_name"] = name;
+            saveData["player_health"] = p.player_health;
+            saveData["monster_health"] = m.monster_health;
+            saveData["action_history"] = history;
+
+            outFile << saveData.dump(4);
+            outFile.close();
+            std::cout << "\n[SUCCESS] Game and history saved to save_game.json!\n";
+        } else {
+            std::cerr << "\n[ERROR] Could not create JSON save file.\n";
+        }
+    }
+
+    void loadGameJSON(Player& p, Monster& m, std::string& name, std::vector<std::string>& history) {
+        std::ifstream inFile("save_game.json");
+
+        if (inFile.is_open()) {
+            json saveData;
+            inFile >> saveData;
+
+            name = saveData["player_name"].get<std::string>();
+            p.player_health = saveData["player_health"].get<int>();
+            m.monster_health = saveData["monster_health"].get<int>();
+
+            history = saveData["action_history"].get<std::vector<std::string>>();
+
+            inFile.close();
+            std::cout << "\n[SUCCESS] Game state and action history loaded successfully!\n";
+        } else {
+            std::cout << "\n[WARNING] No save file found. Continuing current state.\n";
+        }
+    }
 }
 
 int main() {
-    json gameData;
     int choice = 0;
     Player p;
     Monster m;
-
+    std::string nickname;
     std::vector<std::string> action_history;
 
     welcome_page();
 
     std::cout << "Create your nickname: ";
-    std::string nickname;
     std::getline(std::cin, nickname);
-
     std::cout << "Hello, " << nickname << "!\n\n";
 
     while (m.monster_health > 0 && p.player_health > 0) {
         std::cout << "-----------------------------------\n";
-        std::cout << "Enter your choice (1-4): ";
+        std::cout << "Player HP: " << p.player_health << " | Monster HP: " << m.monster_health << "\n";
+        std::cout << "Enter your choice (1-6): ";
         std::cin >> choice;
 
         if (choice == 1) {
             m.damage_player(p);
             std::cout << "You dealt " << p.player_damage << " hp to the monster.\n";
-            std::cout << "Monster health: " << m.monster_health << "\n";
-
             action_history.emplace_back("Attacked monster for 30 damage");
         }
         else if (choice == 2) {
             p.heal_player();
-            std::cout << "You healed 20 HP! Player health: " << p.player_health << "\n";
-
+            std::cout << "You healed 20 HP!\n";
             action_history.emplace_back("Healed 20 HP");
         }
         else if (choice == 3) {
             m.charge_player(p);
             std::cout << "You dealt " << p.player_charge << " hp to the monster.\n";
-            std::cout << "Monster health: " << m.monster_health << "\n";
-
             action_history.emplace_back("Used charge attack for 50 damage");
         }
         else if (choice == 4) {
-            std::cout << "See ya!\n";
-            action_history.emplace_back("Exited game manually");
 
-            gameData["action_history"] = action_history;
+            action_history.emplace_back("Manually saved the game");
+            saveGameJSON(p, m, nickname, action_history);
+            continue;
+        }
+        else if (choice == 5) {
 
+            loadGameJSON(p, m, nickname, action_history);
+            action_history.emplace_back("Manually loaded a save");
+            continue;
+        }
+        else if (choice == 6) {
+            std::cout << "\n--- Exiting Game Without Saving ---\n";
             return 0;
         }
         else {
-            std::cout << "Please enter a number from 1-4.\n";
+            std::cout << "Please enter a number from 1-6.\n";
             continue;
         }
 
         if (m.monster_health > 0) {
             m.attack_monster(p);
             std::cout << "Monster dealt " << m.monster_damage << " damage to you!\n";
-            std::cout << "Your health: " << p.player_health << "\n";
-
             action_history.emplace_back("Monster counter-attacked for 25 damage");
         }
     }
@@ -119,19 +156,21 @@ int main() {
         action_history.emplace_back("Lost the game");
     }
 
-    gameData["d) player_actions_history"] = action_history;
-    gameData["b) player_health"] = p.player_health;
-    gameData["c) monster_health"] = m.monster_health;
-    gameData["a) player_name"] = nickname;
+    json game_data;
+    game_data["a) player_name"] = nickname;
+    game_data["b) player_health"] = p.player_health;
+    game_data["c) monster_health"] = m.monster_health;
+    game_data["d) player_actions_history"] = action_history;
 
-    std::ofstream outFile("Save_game.json");
+    std::ofstream outFile("game_summary.json");
 
     if (outFile.is_open()) {
-        outFile << std::setw(4) << gameData << std::endl;
+        outFile << std::setw(4) << game_data << std::endl;
         outFile.close();
-        std::cout << "Game saved successfully with action history!\n";
+        std::cout << "Session complete. History compiled in game_summary.json!\n";
     } else {
-        std::cout << "Unable to save Save_game.json\n";
+        std::cout << "Unable to save game_summary.json\n";
+        return 0;
     }
 
     return 0;
