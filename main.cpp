@@ -43,11 +43,16 @@ int main() {
         m = std::make_unique<Goblin>();
         monster_type = "Goblin";
         std::cout << "A sneaky Goblin appears!\n";
-    } else {
+    } else if (std::rand() % 2 == 0) {
         m = std::make_unique<Dragon>();
         monster_type = "Dragon";
         std::cout << "A terrifying Dragon appears!\n";
+    }else{
+        m = std::make_unique<Bat>();
+        monster_type = "Bat";
+        std::cout << "A terrifying Bat appears!\n";
     }
+
 
     while (m->monster_health > 0 && p.player_health > 0) {
         std::cout << "-----------------------------------\n";

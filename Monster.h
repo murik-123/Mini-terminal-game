@@ -26,3 +26,9 @@ public:
     int monster_damage() override;
 };
 
+class Bat :public Monster {
+    public:
+    Bat();
+    int monster_damage() override;
+};
+

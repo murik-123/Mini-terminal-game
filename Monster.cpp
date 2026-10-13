@@ -17,11 +17,11 @@ void Monster::charge_player(const Player& p) {
 }
 
 Goblin::Goblin() {
-    monster_health = 180; // Goblins have lower HP
+    monster_health = 180;
 }
 
 int Goblin::monster_damage() {
-    return (std::rand() % 10) + 10; // Weaker, faster attacks
+    return (std::rand() % 10) + 10;
 }
 
 Dragon::Dragon() {
@@ -30,4 +30,12 @@ Dragon::Dragon() {
 
 int Dragon::monster_damage() {
     return (std::rand() % 16) + 25;
+}
+
+Bat::Bat() {
+    monster_health = 100;
+}
+
+int Bat::monster_damage() {
+    return (std::rand() % 10) + 5;
 }
