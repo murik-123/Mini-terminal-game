@@ -1,18 +1,7 @@
-#include <iostream>
-#include <string>
-#include <vector>
-#include <memory>
-#include <fstream>
-#include <iomanip>
-#include <nlohmann/json.hpp>
-
-#include "Player.h"
-#include "Monster.h"
-#include "GameSaver.h"
-
+#include "include_file.h"
 using json = nlohmann::json;
 
-void welcome_page() {
+static void welcome_page() {
     std::cout << "Welcome to the game!\n"
               << "Controls:\n"
               << "Press 1 to attack\n"
