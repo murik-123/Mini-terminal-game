@@ -1,5 +1,4 @@
 #include "include_file.h"
-using json = nlohmann::json;
 
 static void welcome_page() {
     std::cout << "Welcome to the game!\n"
@@ -47,21 +46,21 @@ int main() {
         std::cout << "-----------------------------------\n";
         std::cout << "Player HP: " << p.player_health << " | " << monster_type << " HP: " << m->monster_health << "\n";
         std::cout << "Enter your choice (1-6): ";
-        std::cin >> choice;
+        std::cin >>choice;
 
         if (choice == 1) {
             m->damage_player(p);
-            std::cout << "You dealt " << p.player_damage << " hp to the " << monster_type << ".\n";
+            std::cout << "\n" << "You dealt " << p.player_damage << " hp to the " << monster_type << ".\n";
             action_history.emplace_back("Attacked " + monster_type + " for 30 damage");
         }
         else if (choice == 2) {
             p.heal_player();
-            std::cout << "You healed 20 HP!\n";
+            std::cout << "\n" << "You healed 20 HP!\n";
             action_history.emplace_back("Healed 20 HP");
         }
         else if (choice == 3) {
             m->charge_player(p);
-            std::cout << "You dealt " << p.player_charge << " hp to the " << monster_type << ".\n";
+            std::cout << "\n" << "You dealt " << p.player_charge << " hp to the " << monster_type << ".\n";
             action_history.emplace_back("Used charge attack for 50 damage");
         }
         else if (choice == 4) {
@@ -100,12 +99,12 @@ int main() {
         action_history.emplace_back("Lost the game");
     }
 
-    json game_data;
-    game_data["a) player_name"] = nickname;
-    game_data["b) player_health"] = p.player_health;
-    game_data["c) monster_type"] = monster_type;
-    game_data["d) monster_health"] = m->monster_health;
-    game_data["e) player_actions_history"] = action_history;
+    nlohmann::ordered_json game_data;
+    game_data[" player_name"] = nickname;
+    game_data["player_health"] = p.player_health;
+    game_data["monster_type"] = monster_type;
+    game_data["monster_health"] = m->monster_health;
+    game_data["player_actions_history"] = action_history;
 
     std::ofstream outFile("game_summary.json");
 

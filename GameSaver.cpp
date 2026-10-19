@@ -2,13 +2,11 @@
 #include <fstream>
 #include <iostream>
 
-using json = nlohmann::json;
-
 void saveGameJSON(const Player& p, const Monster& m, const std::string& name, const std::vector<std::string>& history, const std::string& monster_type) {
     std::ofstream outFile("save_game.json");
 
     if (outFile.is_open()) {
-        json saveData;
+        nlohmann::ordered_json saveData;
         saveData["player_name"] = name;
         saveData["player_health"] = p.player_health;
         saveData["monster_type"] = monster_type;
@@ -27,7 +25,7 @@ void loadGameJSON(Player& p, std::unique_ptr<Monster>& m, std::string& name, std
     std::ifstream inFile("save_game.json");
 
     if (inFile.is_open()) {
-        json saveData;
+        nlohmann::json saveData;
         inFile >> saveData;
 
         name = saveData["player_name"].get<std::string>();
