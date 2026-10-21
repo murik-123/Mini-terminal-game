@@ -8,7 +8,10 @@ static void welcome_page() {
               << "Press 3 to charge attack\n"
               << "Press 4 to MANUAL SAVE\n"
               << "Press 5 to MANUAL LOAD\n"
-              << "Press 6 to exit\n";
+              << "Press 6 to exit\n\n"
+              << "E is for Easy\n"
+              << "M is for Medium\n"
+                 "H is for Hard\n";
 }
 
 int main() {
@@ -26,6 +29,8 @@ int main() {
     std::cout << "Create your nickname: ";
     std::getline(std::cin, nickname);
     std::cout << "Hello, " << nickname << "!\n\n";
+    std::cout << nickname << ", enter what level of difficulty you want: ";
+    p.difficulty_player();
 
     if (std::rand() % 2 == 0) {
         m = std::make_unique<Goblin>();

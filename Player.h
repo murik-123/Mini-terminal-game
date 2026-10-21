@@ -2,10 +2,15 @@
 
 class Player {
 public:
-    int player_health = 150;
-    int player_damage = 30;
-    int player_charge = 50;
+
+    int player_health;
+    int player_damage;
+    int player_charge;
+
+    void difficulty_player() const;
 
     void heal_player();
+
+    void difficulty_player();
 };
 
